@@ -11,11 +11,12 @@
   implicit none
   include 'fftw3.f03'
   type(C_PTR) :: planf,planf_many
-  integer,parameter::Nx=11,Ny=29,Nz=53
+  integer,parameter::Nx=171,Ny=251,Nz=593
+  !integer,parameter::Nx=13,Ny=29,Nz=53
   complex(C_DOUBLE_COMPLEX), dimension(nx,ny,nz) :: in, out,in1,out1
   integer,dimension(2)::N
   integer,dimension(2)::nembed
-  integer::i,j,howmany
+  integer::i,j,k,howmany
   integer::stride, dist 
    
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -26,11 +27,15 @@
      call fftw_execute_dft(planf, in(:,:,i), out(:,:,i))
   enddo
 
-  N=[Ny,Nx]; stride=1; dist=nx*ny; howmany=NZ; nembed=N
+  N=[Ny,Nx]; stride=1; dist=ny*nx; howmany=NZ; nembed=N
   planf_many=fftw_plan_many_dft(2 , N, howmany,  in1,   nembed,     stride,   dist,     out1,  nembed,   stride,  dist, fftw_forward, fftw_estimate);
   call init(nx,ny,nz,in1)
   call fftw_execute_dft(planf_many, in1, out1)
-  if(sum(abs(out1-out))<1d-14) print*,"ok1"
+  if(sum(abs(out1-out))<1d-14)then
+        print*,"ok1",sum(abs(out1-out))
+  else
+        print*,'parameters maybe incorrect',sum(abs(out1-out))
+  endif
   call fftw_destroy_plan(planf_many)
   call fftw_destroy_plan(planf)
 
@@ -42,12 +47,24 @@
      call fftw_execute_dft(planf, in(i,:,:), out(i,:,:))
   enddo
 
-  N= [NZ,Ny]; stride=nx; dist=1; nembed =[Nz,ny]; howmany=NX
+  N= [NZ,Ny]; stride=nx; dist=1; nembed =[Nz, ny]; howmany=NX
   planf_many=fftw_plan_many_dft(2 , N, howmany,  in1,   nembed,     stride,   dist,     out1,  nembed,   stride,  dist, fftw_forward, fftw_estimate);
 
   call init(nx,ny,nz,in1)
   call fftw_execute_dft(planf_many, in1, out1)
-  if(sum(abs(out1-out))<1d-14) print*,"ok2"
+  !if(sum(abs(out1-out))<1d-14)then
+  if(maxval(abs(out1-out))<1d-14)then
+        print*,"ok2",sum(abs(out1-out))
+  else
+        print*,'parameters maybe incorrect',sum(abs(out1-out)),maxval(abs(out1-out))
+        do k=1,nz
+           do j=1,ny
+              do i=1,nx
+                 !write(7,*)i,j,k,(out1(i,j,k)-out(i,j,k))/(abs(out1(i,j,k))+abs(out(i,j,k)))
+              enddo
+           enddo
+        enddo
+  endif
   call fftw_destroy_plan(planf_many)
   call fftw_destroy_plan(planf)
 
@@ -66,7 +83,13 @@
 
   call init(nx,ny,nz,in1)
   call fftw_execute_dft(planf_many, in1, out1)
-  if(sum(abs(out1-out))<1d-14) print*,"ok3"
+  !if(sum(abs(out1-out))<1d-14)then
+  if(maxval(abs(out1-out))<1d-14)then
+        print*,"ok3",sum(abs(out1-out))
+  else
+        print*,'parameters maybe incorrect',sum(abs(out1-out)),maxval(abs(out1-out))
+  endif
+
   call fftw_destroy_plan(planf_many)
   call fftw_destroy_plan(planf)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -77,13 +100,20 @@
   implicit none
   integer,intent(in)::nx,ny,nz
   complex(8),dimension(nx,ny,nz)::A
+  real(8),dimension(nx,ny,nz)::ReA,Ima
   integer::i,j,k
-  real(8),parameter::twopi=8d0*datan(1d0)
-  do k=1,nz
-     do j=1,ny
-       do i=1,nx
-         A(i,j,k)=sin(twopi*i/dble(nx))*sin(twopi*j/dble(ny)*2)*sin(twopi*k*3/dble(nz))
-       enddo
-     enddo
-  enddo
+  integer::seed
+  !real(8),parameter::twopi=8d0*datan(1d0)
+  !do k=1,nz
+  !   do j=1,ny
+  !     do i=1,nx
+  !       A(i,j,k)=sin(twopi*i/dble(nx))*sin(twopi*j/dble(ny)*2)*sin(twopi*k*3/dble(nz))
+  !     enddo
+  !   enddo
+  !enddo
+      call random_init(.true., .true.)
+      call random_number(ReA)
+      call random_number(Ima)
+  a=Rea-0.5d0 +(0d0,1d0)*(Ima-0.5d0)
+
   end
