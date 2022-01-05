@@ -114,6 +114,6 @@
       call random_init(.true., .true.)
       call random_number(ReA)
       call random_number(Ima)
-  !a=Rea-0.5d0 +(0d0,1d0)*(Ima-0.5d0)
+   a=Rea +(0d0,1d0)*Ima
    a=a-sum(a)/dble(nx*ny*nz)
   end
